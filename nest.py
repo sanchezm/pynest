@@ -1,4 +1,5 @@
 #! /usr/bin/python
+# -*- coding: utf-8 -*-
 
 # nest.py -- a python interface to the Nest Thermostat
 # by Scott M Baker, smbaker@gmail.com, http://www.smbaker.com/
@@ -16,6 +17,42 @@
 # Acknowledgements:
 #    Chris Burris's Siri Nest Proxy was very helpful to learn the nest's
 #       authentication and some bits of the protocol.
+
+# --- START: Workaround for HTTP ERROR from TLSv2------------------------------
+import httplib
+from httplib import HTTPConnection, HTTPS_PORT
+import ssl
+import socket
+
+class HTTPSConnection(HTTPConnection):
+    "This class allows communication via SSL."
+
+    default_port = HTTPS_PORT
+
+    def __init__(self, host, port=None, key_file=None, cert_file=None,
+                 strict=None, timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
+                 source_address=None):
+        HTTPConnection.__init__(self, host, port, strict, timeout, 
+                                source_address)
+        self.key_file = key_file
+        self.cert_file = cert_file
+
+    def connect(self):
+        "Connect to a host on a given (SSL) port."
+
+        sock = socket.create_connection((self.host, self.port),
+                                        self.timeout, self.source_address)
+        
+        if self._tunnel_host:
+            self.sock = sock
+            self._tunnel()
+  
+        # WORKAROUND: use TLSv1
+        self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
+                                    ssl_version=ssl.PROTOCOL_TLSv1)
+
+httplib.HTTPSConnection = HTTPSConnection
+# ---END: Workaround for HTTP ERROR from TLSv2---------------------------------
 
 import urllib
 import urllib2
@@ -180,6 +217,7 @@ def help():
     print "    show                  ... show everything"
     print "    curtemp               ... print current temperature"
     print "    curhumid              ... print current humidity"
+    print "    current               ... print current temperature & humidity"
     print
     print "examples:"
     print "    nest.py --user joe@user.com --password swordfish temp 73"
@@ -224,6 +262,11 @@ def main():
         n.show_curtemp()
     elif (cmd == "curhumid"):
         print n.status["device"][n.serial]["current_humidity"]
+    elif (cmd == "current"):
+        temp = n.status["shared"][n.serial]["current_temperature"]
+        temp = n.temp_out(temp)
+        print "Temp  = %0.1f°F" % temp
+        print "Humid = %d%%" % n.status["device"][n.serial]["current_humidity"]
     else:
         print "misunderstood command:", cmd
         print "do 'nest.py help' for help"
