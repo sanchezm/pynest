@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # nest.py -- a python interface to the Nest Thermostat
@@ -17,6 +17,7 @@
 # Acknowledgements:
 #    Chris Burris's Siri Nest Proxy was very helpful to learn the nest's
 #       authentication and some bits of the protocol.
+###############################################################################
 
 # --- START: Workaround for HTTP ERROR from TLSv2------------------------------
 import httplib
@@ -53,6 +54,7 @@ class HTTPSConnection(HTTPConnection):
 
 httplib.HTTPSConnection = HTTPSConnection
 # ---END: Workaround for HTTP ERROR from TLSv2---------------------------------
+
 
 import urllib
 import urllib2
@@ -265,8 +267,11 @@ def main():
     elif (cmd == "current"):
         temp = n.status["shared"][n.serial]["current_temperature"]
         temp = n.temp_out(temp)
-        print "Temp  = %0.1f°F" % temp
-        print "Humid = %d%%" % n.status["device"][n.serial]["current_humidity"]
+        auto_away = n.status["shared"][n.serial]["auto_away"]
+        print "{0:.1f}°{1}".format(temp, units)
+        print "%d%% Humidity" % n.status["device"][n.serial]["current_humidity"]
+        if (auto_away == 1):
+            print "[Auto Away Enabled]"
     else:
         print "misunderstood command:", cmd
         print "do 'nest.py help' for help"
