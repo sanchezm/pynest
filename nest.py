@@ -8,7 +8,7 @@
 #    'nest.py help' will tell you what to do and how to do it
 #
 # Licensing:
-#    This is distributed unider the Creative Commons 3.0 Non-commecrial,
+#    This is distributed under the Creative Commons 3.0 Non-commercial,
 #    Attribution, Share-Alike license. You can use the code for noncommercial
 #    purposes. You may NOT sell it. If you do use it, then you must make an
 #    attribution to me (i.e. Include my name and thank me for the hours I spent
@@ -68,7 +68,7 @@ except ImportError:
        import simplejson as json
    except ImportError:
        print "No json library available. I recommend installing either python-json"
-       print "or simpejson."
+       print "or simplejson."
        sys.exit(-1)
 
 class Nest:
@@ -156,8 +156,14 @@ class Nest:
 
     def show_curmode(self):
         mode = self.status["shared"][self.serial]["target_temperature_type"]
-        
-        print mode
+        if mode == 'range':
+            min_temp = self.status["shared"][self.serial]["target_temperature_low"]
+            min_temp = self.temp_out(min_temp);
+            max_temp = self.status["shared"][self.serial]["target_temperature_high"]
+            max_temp = self.temp_out(max_temp);
+            print "range {0:.1f}°{2} - {1:.1f}°{2}".format(min_temp, max_temp, self.units)
+        else:
+            print mode
 
     def set_temperature(self, temp):
         temp = self.temp_in(temp)
@@ -209,7 +215,7 @@ def create_parser():
                      help="password for nest.com", metavar="PASSWORD", default=None)
 
    parser.add_option("-c", "--celsius", dest="celsius", action="store_true", default=False,
-                     help="use celsius instead of farenheit")
+                     help="use celsius instead of fahrenheit")
 
    parser.add_option("-s", "--serial", dest="serial", default=None,
                      help="optional, specify serial number of nest thermostat to talk to")
@@ -225,7 +231,7 @@ def help():
     print "options:"
     print "   --user <username>      ... username on nest.com"
     print "   --password <password>  ... password on nest.com"
-    print "   --celsius              ... use celsius (the default is farenheit)"
+    print "   --celsius              ... use celsius (the default is fahrenheit)"
     print "   --serial <number>      ... optional, specify serial number of nest to use"
     print "   --index <number>       ... optional, 0-based index of nest"
     print "                                (use --serial or --index, but not both)"
